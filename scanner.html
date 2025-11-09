@@ -1,0 +1,171 @@
+/**
+ * Configurazione API di Gemini.
+ * Questo file gestisce tutte le chiamate API, sostituendo l'endpoint precedente.
+ */
+
+// Costanti per l'API di Gemini
+const GEMINI_MODEL_TEXT = "gemini-2.5-flash-preview-09-2025";
+const GEMINI_MODEL_VISION = "gemini-2.5-flash-preview-09-2025";
+const apiKey = "AIzaSyAwpcIQxwTgxEfdxn1adlt-UW1dAS9lgEA"; // La chiave API viene gestita dal sistema in cui è ospitato questo codice (es. Canvas).
+
+/**
+ * Funzione generica per eseguire una richiesta POST JSON per il testo.
+ * @param {string} endpoint - Ignorato (mantenuto per compatibilità).
+ * @param {object} data - Oggetto contenente il testo da processare ({ text: string }).
+ * @returns {Promise<object>} Il risultato JSON con il testo generato.
+ */
+export async function postJSON(endpoint, data) {
+    const userPrompt = data.text;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_TEXT}:generateContent?key=${apiKey}`;
+
+    const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        // È possibile aggiungere istruzioni di sistema qui
+        // systemInstruction: { parts: [{ text: "Sei un tutor AI amichevole e incoraggiante." }] },
+    };
+
+    return await executeGeminiRequest(apiUrl, payload, "testo");
+}
+
+/**
+ * Funzione per convertire un File in base64.
+ * @param {File} file - Il file da convertire.
+ * @returns {Promise<string>} La stringa base64.
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Funzione per l'analisi di testo da immagini (Scanner OCR).
+ * @param {File} file - L'immagine o il PDF da analizzare.
+ */
+export async function analizzaImmagine(file) {
+    const scanOut = document.getElementById('scanOut');
+    if (!scanOut) return;
+    
+    scanOut.textContent = '';
+    const loading = document.createElement('span');
+    loading.className = 'loading'; 
+    loading.innerHTML = 'Analisi immagine in corso <span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    scanOut.appendChild(loading);
+
+    try {
+        if (!file.type.startsWith('image/')) {
+            throw new Error("Solo immagini supportate al momento.");
+        }
+
+        const base64ImageData = await fileToBase64(file);
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_VISION}:generateContent?key=${apiKey}`;
+
+        const userPrompt = "Estrai tutto il testo dall'immagine e, se rilevi contenuti matematici, convertili in un formato leggibile e pulito (es. LaTeX). Riporta prima il testo e poi eventuali formule. Non aggiungere commenti o preamboli.";
+        
+        const payload = {
+            contents: [{
+                role: "user",
+                parts: [
+                    { text: userPrompt },
+                    {
+                        inlineData: {
+                            mimeType: file.type,
+                            data: base64ImageData
+                        }
+                    }
+                ]
+            }],
+        };
+
+        const result = await executeGeminiRequest(apiUrl, payload, "immagine");
+        scanOut.textContent = result.generated_text;
+
+    } catch (e) {
+        console.error("Errore nell'analisi immagine:", e);
+        scanOut.textContent = `Errore: ${e.message}`;
+    }
+}
+
+/**
+ * Funzione per l'analisi di un testo (Analizza Testo).
+ */
+export async function analizzaTesto() {
+    const textToAnalyze = document.getElementById('textToAnalyze');
+    const analisiOut = document.getElementById('analisiOut');
+    if (!textToAnalyze || !analisiOut) return;
+
+    const text = textToAnalyze.value.trim();
+    if (!text) {
+        analisiOut.textContent = "Per favore, incolla del testo da analizzare.";
+        return;
+    }
+
+    analisiOut.textContent = '';
+    const loading = document.createElement('span');
+    loading.className = 'loading'; 
+    loading.innerHTML = 'Analisi in corso <span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    analisiOut.appendChild(loading);
+
+    try {
+        const prompt = `Analizza il seguente testo. Fornisci un breve riassunto, identifica i 5 concetti chiave e suggerisci 3 domande di verifica in formato elenco puntato. Formatta la risposta con titoli e grassetti:\n\nTesto: ${text}`;
+        
+        const result = await postJSON('/analyze', { text: prompt });
+
+        analisiOut.textContent = result.generated_text;
+
+    } catch (e) {
+        console.error("Errore nell'analisi testo:", e);
+        analisiOut.textContent = `Errore: ${e.message}`;
+    }
+}
+
+
+// --- Logica di Esecuzione e Backoff (Condivisa) ---
+
+async function executeGeminiRequest(apiUrl, payload, taskName) {
+    const maxRetries = 5;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Errore HTTP! Stato: ${response.status}. Messaggio: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (generatedText) {
+                // Ritorna l'oggetto atteso dai vecchi file HTML
+                return { generated_text: generatedText };
+            } else {
+                console.error(`Risposta Gemini mancante per ${taskName}:`, result);
+                throw new Error("Risposta API valida, ma il testo generato è mancante. Controlla il prompt.");
+            }
+
+        } catch (error) {
+            attempt++;
+            console.warn(`Tentativo ${attempt} fallito per ${taskName}. Errore: ${error.message}`);
+            if (attempt >= maxRetries) {
+                throw new Error(`Tentativi massimi raggiunti. Impossibile ottenere risposta: ${error.message}`);
+            }
+            // Attendi con backoff esponenziale (1s, 2s, 4s, 8s, ...)
+            const delay = Math.pow(2, attempt) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
+
+// Rendi le funzioni disponibili globalmente per gli script inline (analizza.html, scanner.html)
+window.analizzaTesto = analizzaTesto;
+window.analizzaImmagine = analizzaImmagine;
