@@ -1,0 +1,57 @@
+/**
+ * Variabile per la chiave API.
+ * N.B.: Lasciare vuoto in questo ambiente; la chiave sarà fornita dal sistema.
+ * Per l'uso esterno, inserisci la tua chiave API di Gemini qui:
+ * const apiKey = "AIzaSyAwpcIQxwTgxEfdxn1adlt-UW1dAS9lgEA";
+ */
+const apiKey = "";
+const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+/**
+ * Chiama l'API di Gemini con i contenuti e le istruzioni di sistema.
+ * @param {string} systemInstruction - Le istruzioni per il modello (System Prompt).
+ * @param {Array<Object>} history - La cronologia della conversazione (se presente).
+ * @returns {Promise<string>} Il testo generato dal modello.
+ */
+export async function callGeminiApi(systemInstruction, history) {
+    // La cronologia è usata per il contesto della conversazione
+    const contents = history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+    }));
+
+    const payload = {
+        contents: contents,
+        systemInstruction: {
+            parts: [{ text: systemInstruction }]
+        },
+    };
+
+    let response;
+    // Implementazione del backoff esponenziale per i tentativi
+    for (let i = 0; i < 3; i++) {
+        try {
+            response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error("Risposta API vuota o non valida.");
+                return text;
+            } else if (response.status === 429 && i < 2) {
+                // Troppe richieste (Rate Limit), attendi e riprova
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+            } else {
+                throw new Error(`Errore API: ${response.status} ${response.statusText}`);
+            }
+        } catch (error) {
+            if (i === 2) throw error;
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+        }
+    }
+    throw new Error("Tutti i tentativi di chiamata API sono falliti.");
+}
