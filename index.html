@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leggolo AI - Interfaccia Accessibile e Completa</title>
+    <!-- Tailwind CSS per uno stile moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (per icone semplici in stile outline) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /*
+        Stile Generale: Moderno, Luminoso e Rassicurante
+        Colori: Azzurro chiaro (Fiducia), Bianco (Ordine), Giallo tenue (Accento)
+        Tipografia: Lexend, grandi e spaziosi (min. 16px)
+        */
+        :root {
+            --color-primary: #60a5fa; /* Azzurro (Blue-400) */
+            --color-primary-hover: #3b82f6; /* Blu più scuro */
+            --color-accent: #fcd34d; /* Giallo tenue (Amber-300) */
+            --color-text-dark: #1f2937; /* Grigio-Nero */
+            --color-bg-light: #f9fafb; /* Sfondo molto chiaro */
+        }
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: var(--color-bg-light);
+            color: var(--color-text-dark);
+            min-height: 100vh;
+        }
+
+        /* Stile Topbar */
+        .topbar {
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Stile Mascotte Zebra AI */
+        .zebra-ai {
+            color: var(--color-primary);
+            margin-right: 0.5rem;
+            animation: bounce-in 0.8s ease-out;
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Pulsanti e Forme Tondeggianti (Card e Bottoni) */
+        .card, .btn, .input-field, .panel {
+            border-radius: 0.75rem; /* Bordi morbidi */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-bg-light);
+            border: 1px solid #d1d5db;
+            color: var(--color-text-dark);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        /* Chat Styling (Box di risposta pulito) */
+        .chat-wrap {
+            height: calc(100vh - 18rem); /* Più spazio per la chat */
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: white; /* Sfondo bianco per la chat */
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .msg {
+            max-width: 90%;
+            font-size: 16px; /* Testo grande e leggibile */
+        }
+        .msg.user { margin-left: auto; }
+        .msg.bot { margin-right: auto; }
+
+        .msg .bubble {
+            padding: 1rem 1.25rem;
+            border-radius: 1.5rem; /* Tondeggiante */
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .msg.user .bubble {
+            background-color: var(--color-primary);
+            color: white;
+            border-bottom-right-radius: 0.5rem; /* Angolo morbido */
+        }
+        .msg.bot .bubble {
+            background-color: var(--color-bg-light);
+            color: var(--color-text-dark);
+            border: 1px solid #d1d5db;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        /* Stile Input */
+        .input-field {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+        }
+        .input-field:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5); /* Effetto focus rassicurante */
+            outline: none;
+        }
+
+        /* Loading Dots */
+        .loading { display: flex; align-items: center; font-style: italic; color: #4b5563; }
+        .loading .dot { width: 6px; height: 6px; margin: 0 2px; background-color: #9ca3af; border-radius: 50%; animation: dot-loading 1.4s infinite ease-in-out both; }
+        .loading .dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading .dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading .dot:nth-child(3) { animation-delay: 0s; }
+        @keyframes dot-loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Box di Risposta (Analisi/Traduzione) */
+        .panel {
+            min-height: 100px;
+            padding: 1.5rem;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+            font-size: 16px;
+        }
+
+        /* Versione Mobile */
+        @media (max-width: 640px) {
+            .container-app { padding: 1rem; }
+            .chat-wrap { height: 60vh; max-height: 400px; }
+            .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .btn-primary { padding: 0.6rem 1rem; }
+        }
+    </style>
+    <script>
+        // --- CONFIGURAZIONE GLOBALE & AUTH FIREBASE (MANDATORY) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // ***************************************************************
+        // *** PUNTO CRITICO: INSERISCI QUI LA TUA CHIAVE API GEMINI ***
+        // *** LA CHIAVE SARÀ VISIBILE A TUTTI NEL CODICE SORGENTE! ***
+        // ***************************************************************
+        const apiKey = ""; // <--- SOSTITUISCI GLI APICI CON LA TUA CHIAVE API
+        
+        let isProcessing = false; // Flag per prevenire chiamate multiple
+
+        // Function to convert Base64 PCM to WAV Blob (MANDATORY for TTS)
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcmData, sampleRate) {
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+            const blockAlign = numChannels * (bitsPerSample / 8);
+            const dataSize = pcmData.byteLength;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const writeString = (str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+                offset += str.length;
+            };
+            const writeUint32 = (val) => { view.setUint32(offset, val, true); offset += 4; };
+            const writeUint16 = (val) => { view.setUint16(offset, val, true); offset += 2; };
+
+            // RIFF chunk
+            writeString('RIFF');
+            writeUint32(36 + dataSize); // Chunk size
+            writeString('WAVE');
+
+            // FMT sub-chunk
+            writeString('fmt ');
+            writeUint32(16);             // Sub-chunk 1 size (16 for PCM)
+            writeUint16(1);              // Audio format (1 for PCM)
+            writeUint16(numChannels);    // Number of channels
+            writeUint32(sampleRate);     // Sample rate
+            writeUint32(byteRate);       // Byte rate
+            writeUint16(blockAlign);     // Block align
+            writeUint16(bitsPerSample);  // Bits per sample
+
+            // DATA sub-chunk
+            writeString('data');
+            writeUint32(dataSize);       // Sub-chunk 2 size
+
+            // PCM data
+            const pcm8 = new Uint8Array(pcmData.buffer);
+            for (let i = 0; i < dataSize; i++) {
+                view.setUint8(offset + i, pcm8[i]);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        async function fetchGemini(userQuery, systemPrompt, useSearch, imageBase64 = null) {
+            if (apiKey === "") {
+                throw new Error("Chiave API mancante. Inserisci la tua chiave nell'apposito campo nel codice sorgente.");
+            }
+            
+            const model = "gemini-2.5-flash-preview-09-2025";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+            const parts = [{ text: userQuery }];
+            if (imageBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg", // Assuming JPG for simplicity
+                        data: imageBase64
+                    }
+                });
+            }
+
+            const payload = {
+                contents: [{ parts: parts }],
+                ...(systemPrompt && { systemInstruction: { parts: [{ text: systemPrompt }] } }),
+                ...(useSearch && { tools: [{ "google_search": {} }] }),
+            };
+
+            let response;
+            for (let i = 0; i < 4; i++) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.status !== 429) break;
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                } catch (error) {
+                    console.error("Fetch attempt failed:", error);
+                    if (i === 3) throw new Error("API call failed after multiple retries.");
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                }
+            }
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`API Error: ${response.status} ${response.statusText}. Dettagli: ${errorBody.substring(0, 100)}...`);
+            }
+
+            const result = await response.json();
+            return result.candidates?.[0]?.content?.parts?.[0]?.text || "Nessuna risposta generata dall'AI.";
+        }
+
+        // --- TTS FUNCTION (MANDATORY) ---
+        async function fetchTts(text, voiceName = "Kore") {
+            if (apiKey === "") {
+                throw new Error("Chiave API mancante. Impossibile generare l'audio.");
+            }
+
+            const model = "gemini-2.5-flash-preview-tts";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName } }
+                    }
+                },
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error("TTS API call failed.");
+
+            const result = await response.json();
+            const part = result?.candidates?.[0]?.content?.parts?.[0];
+            const audioData = part?.inlineData?.data;
+            const mimeType = part?.inlineData?.mimeType;
+
+            if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData); // PCM 16 bit signed
+                const wavBlob = pcmToWav(pcm16, sampleRate);
+                return URL.createObjectURL(wavBlob);
+            }
+            throw new Error("Dati audio TTS non trovati o formato non valido.");
+        }
+
+
+        // --- APP FUNCTIONALITIES ---
+
+        const ROUTES = {
+            'HOME': 'home',
+            'TUTOR': 'tutor',
+            'TRANSLATE': 'translate',
+            'ANALYZE': 'analyze',
+        };
+
+        let currentRoute = ROUTES.HOME;
+        let chatHistory = [];
+
+        function navigate(route) {
+            currentRoute = route;
+            renderApp();
+            // Scroll to the bottom of the chat when entering the Tutor screen
+            if (route === ROUTES.TUTOR) {
+                setTimeout(() => {
+                    const chatContainer = document.getElementById('chatContainer');
+                    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 50);
+            }
+        }
+
+        function getIcon(name, classes = 'w-6 h-6') {
+            // Utilizza Lucide Icons
+            return `<i data-lucide="${name}" class="${classes}"></i>`;
+        }
+
+        // #region Tutor AI Logic
+        const addMsg = (role, textOrHtml, containerId) => {
+            const chatContainer = document.getElementById(containerId);
+            if (!chatContainer) return;
+
+            const wrap = document.createElement('div');
+            wrap.className = `msg ${role}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            if (typeof textOrHtml === 'string') {
+                bubble.innerHTML = textOrHtml.replace(/\n/g, '<br>');
+            } else {
+                bubble.appendChild(textOrHtml);
+            }
+
+            wrap.appendChild(bubble);
+            chatContainer.appendChild(wrap);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            lucide.createIcons(); // Initialize new Lucide icons
+        };
+
+        const loadingNode = () => {
+            return `<div class="loading"><span class="font-normal text-sm">Zebra AI: Analisi in corso</span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+        };
+
+        async function askTutor() {
+            if (isProcessing) return;
+
+            const inputElement = document.getElementById('tutorInput');
+            const fileInput = document.getElementById('tutorFile');
+            const chatContainerId = 'chatContainer';
+            const txt = inputElement.value.trim();
+            const file = fileInput.files[0];
+
+            if (!txt && !file) return;
+
+            isProcessing = true;
+            inputElement.disabled = true;
+            fileInput.disabled = true;
+            document.getElementById('tutorSend').disabled = true;
+
+            const userPrompt = txt;
+            let imageBase64 = null;
+
+            // 1. Handle File Upload (Image or Generic)
+            if (file) {
+                const reader = new FileReader();
+                const readPromise = new Promise(resolve => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = () => resolve(null); // Handle file read error
+                });
+                reader.readAsDataURL(file);
+                const dataUrl = await readPromise;
+
+                if (!dataUrl) {
+                    addMsg('bot', `❌ Errore nella lettura del file: ${file.name}`, chatContainerId);
+                    isProcessing = false;
+                    inputElement.disabled = false;
+                    fileInput.disabled = false;
+                    document.getElementById('tutorSend').disabled = false;
+                    return;
+                }
+
+                // Check if it's an image
+                if (file.type.startsWith('image/')) {
+                    const base64Content = dataUrl.split(',')[1];
+                    imageBase64 = base64Content;
+                    addMsg('user', `${userPrompt} [Immagine: ${file.name}]`, chatContainerId);
+                } else {
+                    // For other files, currently just show file name (Gemini only supports text/image/audio)
+                    addMsg('user', `${userPrompt} [File caricato non immagine: ${file.name}]`, chatContainerId);
+                }
+            } else {
+                addMsg('user', userPrompt, chatContainerId);
+            }
+
+            inputElement.value = '';
+            fileInput.value = ''; // Clear file input
+
+            // Add a temporary loading message
+            const loadElementId = 'loading-temp-' + Date.now();
+            addMsg('bot', `<div id="${loadElementId}">${loadingNode()}</div>`, chatContainerId);
+
+            try {
+                // System Instruction adapted for Zebra AI tutor role
+                const systemPrompt = "Sei Zebra AI, la Mascotte e Tutor AI di Leggolo. Sei amichevole, rassicurante e specializzato nel supporto agli studenti con DSA (Dislessia, Discalculia, Disortografia, Disgrafia). Il tuo obiettivo è generare spiegazioni semplici, riassunti chiari, esercizi adattivi e idee creative, mantenendo un tono incoraggiante e didattico. Se ricevi un'immagine (quaderno o libro), analizza il testo/contenuto per rispondere al meglio. Rispondi in italiano.";
+                
+                // If an image is present, the prompt will focus on image analysis
+                const query = imageBase64 
+                    ? `Analizza l'immagine e rispondi alla seguente richiesta: ${userPrompt || 'Descrivi e analizza il contenuto.'}`
+                    : userPrompt;
+
+                const llmResponse = await fetchGemini(query, systemPrompt, true, imageBase64);
+
+                // Remove the loading message and add the final response
+                const loadDiv = document.getElementById(loadElementId);
+                if (loadDiv && loadDiv.parentElement) {
+                    loadDiv.parentElement.remove();
+                }
+
+                addMsg('bot', llmResponse, chatContainerId);
+
+            } catch (e) {
+                const loadDiv = document.getElementById(loadElementId);
+                if (loadDiv && loadDiv.parentElement) {
+                    loadDiv.parentElement.remove();
+                }
+                addMsg('bot', `❌ Errore Zebra AI: ${e.message}`, chatContainerId);
+            } finally {
+                isProcessing = false;
+                inputElement.disabled = false;
+                fileInput.disabled = false;
+                document.getElementById('tutorSend').disabled = false;
+                inputElement.focus();
+            }
+        }
+        // #endregion Tutor AI Logic
+
+        // #region Translate Logic
+        const languages = [
+            { code: 'en', name: 'Inglese' },
+            { code: 'es', name: 'Spagnolo' },
+            { code: 'fr', name: 'Francese' },
+            { code: 'de', name: 'Tedesco' },
+            { code: 'pt', name: 'Portoghese' },
+            { code: 'ru', name: 'Russo' },
+            { code: 'zh', name: 'Cinese (Mandarino)' },
+            { code: 'ar', name: 'Arabo' },
+            { code: 'ja', name: 'Giapponese' },
+            { code: 'it', name: 'Italiano' } 
+        ];
+
+        async function runTranslate() {
+            const textToTranslate = document.getElementById('translateText');
+            const targetLang = document.getElementById('targetLang');
+            const outputElement = document.getElementById('translateOut');
+            const speakButton = document.getElementById('speakBtn');
+            const goButton = document.getElementById('translateGo');
+            const text = textToTranslate.value.trim();
+
+            if (!text || isProcessing) return;
+
+            isProcessing = true;
+            outputElement.innerHTML = loadingNode();
+            goButton.disabled = true;
+            speakButton.disabled = true;
+            speakButton.classList.add('opacity-50');
+            textToTranslate.disabled = true;
+            targetLang.disabled = true;
+
+            try {
+                const langName = languages.find(l => l.code === targetLang.value)?.name || targetLang.value;
+
+                const systemPrompt = `Sei un traduttore per DSA. Traduci il testo fornito in ${langName} in modo chiaro, semplice e conciso, perfetto per chi ha difficoltà di lettura. Rispondi solo con la traduzione, senza commenti aggiuntivi.`;
+                const userQuery = `Traduci il seguente testo in ${langName}:\n\n${text}`;
+                const llmResponse = await fetchGemini(userQuery, systemPrompt, false);
+
+                outputElement.textContent = llmResponse;
+
+                // Abilita il bottone vocale dopo la traduzione
+                speakButton.disabled = false;
+                speakButton.classList.remove('opacity-50');
+
+            } catch (e) {
+                outputElement.textContent = `❌ Errore di traduzione: ${e.message}`;
+            } finally {
+                isProcessing = false;
+                goButton.disabled = false;
+                textToTranslate.disabled = false;
+                targetLang.disabled = false;
+            }
+        }
+
+        async function speakTranslation() {
+            const outputElement = document.getElementById('translateOut');
+            const speakButton = document.getElementById('speakBtn');
+            const textToSpeak = outputElement.textContent.trim();
+
+            if (!textToSpeak || isProcessing) return;
+
+            isProcessing = true;
+            speakButton.disabled = true;
+            speakButton.innerHTML = `${getIcon('volume-2', 'w-4 h-4 mr-2 animate-pulse')} Leggi...`;
+
+            try {
+                // Determine the voice based on the translated language (approximate)
+                let voice = 'Kore'; // Default Italian/Firm voice
+                const targetLangCode = document.getElementById('targetLang').value;
+                if (targetLangCode === 'en') voice = 'Zephyr'; // Bright
+                else if (targetLangCode === 'es') voice = 'Puck'; // Upbeat
+                else if (targetLangCode === 'fr') voice = 'Charon'; // Informative
+                
+                const audioUrl = await fetchTts(textToSpeak, voice);
+                const audio = new Audio(audioUrl);
+                audio.play();
+
+                audio.onended = () => {
+                    speakButton.innerHTML = `${getIcon('volume-2', 'w-4 h-4 mr-2')} Audio Vocale`;
+                    speakButton.disabled = false;
+                    isProcessing = false;
+                    lucide.createIcons();
+                };
+
+                audio.onerror = (e) => {
+                    console.error("Audio error:", e);
+                    alert(`Impossibile riprodurre l'audio. Errore: ${e.message}`);
+                    speakButton.innerHTML = `${getIcon('volume-2', 'w-4 h-4 mr-2')} Audio Vocale`;
+                    speakButton.disabled = false;
+                    isProcessing = false;
+                    lucide.createIcons();
+                };
+
+            } catch (e) {
+                alert(`Impossibile generare l'audio: ${e.message}`);
+                speakButton.innerHTML = `${getIcon('volume-2', 'w-4 h-4 mr-2')} Audio Vocale`;
+                speakButton.disabled = false;
+                isProcessing = false;
+                lucide.createIcons();
+            }
+        }
+        // #endregion Translate Logic
+
+        // #region Analyze Text Logic
+        async function analyzeText() {
+            const textToAnalyze = document.getElementById('analyzeTextarea');
+            const outputElement = document.getElementById('analyzeOut');
+            const summarizeBtn = document.getElementById('summarizeBtn');
+            const conceptMapBtn = document.getElementById('conceptMapBtn');
+            const text = textToAnalyze.value.trim();
+
+            if (!text || isProcessing) return;
+
+            isProcessing = true;
+            outputElement.innerHTML = loadingNode();
+            summarizeBtn.disabled = true;
+            conceptMapBtn.disabled = true;
+            textToAnalyze.disabled = true;
+
+            try {
+                const systemPrompt = "Sei un assistente per l'analisi del testo per DSA. Genera prima un riassunto conciso del testo fornito (max 5 frasi) e poi elenca i 3-5 concetti principali in forma di punti elenco. Utilizza un linguaggio semplice, chiaro e spazioso. Formatta la risposta in Markdown con intestazioni chiare (es. 'Riassunto Conclusivo' e 'Concetti Chiave').";
+                const userQuery = `Analizza e riassumi il seguente testo per renderlo facile da studiare:\n\n${text}`;
+                const llmResponse = await fetchGemini(userQuery, systemPrompt, false);
+
+                // Simple conversion for basic formatting display in <pre>
+                let formattedResponse = llmResponse.replace(/\*\*(.*?)\*\*/g, '— $1 —'); // Emphasize bold text
+                formattedResponse = formattedResponse.replace(/^- /gm, '• '); // Replace Markdown list with bullet points
+                outputElement.textContent = formattedResponse;
+
+            } catch (e) {
+                outputElement.textContent = `❌ Errore di analisi: ${e.message}`;
+            } finally {
+                isProcessing = false;
+                summarizeBtn.disabled = false;
+                conceptMapBtn.disabled = false;
+                textToAnalyze.disabled = false;
+            }
+        }
+
+        function mockConceptMap() {
+            const outputElement = document.getElementById('analyzeOut');
+            outputElement.textContent = `Funzione "Mappa Concettuale": \n\nQuesta funzione è in arrivo! Presto potrai generare una rappresentazione grafica (Mock) dei concetti chiave del testo. Per ora, usa la funzione Riassunto per prendere appunti.`;
+        }
+        // #endregion Analyze Text Logic
+
+
+        // #region HTML Rendering
+        function getHeader() {
+            let title = '';
+            let isBack = false;
+            switch (currentRoute) {
+                case ROUTES.HOME: title = 'Leggolo'; break;
+                case ROUTES.TUTOR: title = 'Tutor AI - La Zebra'; isBack = true; break;
+                case ROUTES.TRANSLATE: title = 'Traduci e Ascolta'; isBack = true; break;
+                case ROUTES.ANALYZE: title = 'Analizza Testo'; isBack = true; break;
+            }
+
+            const brandContent = isBack
+                ? `
+                    <button onclick="navigate(ROUTES.HOME)" class="back-btn absolute left-4 text-gray-800 p-2 rounded-full hover:bg-gray-100 transition duration-150">
+                        ${getIcon('arrow-left')}
+                    </button>
+                    <h1 class="text-xl font-bold mx-auto text-gray-800">${title}</h1>
+                  `
+                : `
+                    <div class="flex items-center">
+                        <img src="uploaded:574238630_1426641259463338_6281796863567350270_n.jpg-59d1ec4b-6152-4a64-97c8-2ce488bd445f" alt="Leggolo Logo" class="w-8 h-8 mr-2">
+                        <h1 class="text-2xl font-bold text-gray-800">${title}</h1>
+                    </div>
+                  `;
+
+            return `
+                <header class="topbar p-4 relative flex justify-center items-center">
+                    ${brandContent}
+                </header>
+            `;
+        }
+
+        function getBodyContent() {
+            switch (currentRoute) {
+                case ROUTES.HOME:
+                    return `
+                        <div class="space-y-8">
+                            <section class="p-6 bg-white rounded-xl shadow-xl border-l-4 border-l-orange-400">
+                                <h2 class="text-2xl font-semibold mb-2 text-gray-700">Benvenuto/a su Leggolo!</h2>
+                                <p class="text-gray-500 text-lg">Il tuo assistente AI, studiato per rendere lo studio più semplice e rassicurante.</p>
+                            </section>
+
+                            <nav class="grid grid-cols-2 gap-6">
+                                <button class="card bg-white p-5 text-center block border-2 border-transparent" onclick="navigate(ROUTES.TUTOR)">
+                                    <div class="card-ico text-blue-500 flex justify-center mb-2">${getIcon('message-square', 'w-10 h-10')}</div>
+                                    <h3 class="text-lg font-semibold">Tutor AI</h3>
+                                    <p class="text-sm text-gray-500">Spiegazioni, esercizi e supporto anche da foto.</p>
+                                </button>
+
+                                <button class="card bg-white p-5 text-center block border-2 border-transparent" onclick="navigate(ROUTES.ANALYZE)">
+                                    <div class="card-ico text-red-500 flex justify-center mb-2">${getIcon('book-open', 'w-10 h-10')}</div>
+                                    <h3 class="text-lg font-semibold">Analizza Testi</h3>
+                                    <p class="text-sm text-gray-500">Riassunti, concetti chiave e mappe.</p>
+                                </button>
+
+                                <button class="card bg-white p-5 text-center block border-2 border-transparent" onclick="navigate(ROUTES.TRANSLATE)">
+                                    <div class="card-ico text-green-500 flex justify-center mb-2">${getIcon('globe', 'w-10 h-10')}</div>
+                                    <h3 class="text-lg font-semibold">Traduci & Ascolta</h3>
+                                    <p class="text-sm text-gray-500">Traduzione e lettura vocale in 10 lingue.</p>
+                                </button>
+
+                                <button class="card bg-white p-5 text-center block border-2 border-transparent opacity-60 cursor-not-allowed">
+                                    <div class="card-ico text-yellow-500 flex justify-center mb-2">${getIcon('settings', 'w-10 h-10')}</div>
+                                    <h3 class="text-lg font-semibold">Altro / Profilo</h3>
+                                    <p class="text-sm text-gray-500">Impostazioni e aree personali (in arrivo).</p>
+                                </button>
+                            </nav>
+                        </div>
+                    `;
+
+                case ROUTES.TUTOR:
+                    return `
+                        <div class="h-full flex flex-col">
+                            <div class="p-3 bg-indigo-50 rounded-xl mb-4 flex items-start">
+                                ${getIcon('brain', 'w-8 h-8 flex-shrink-0 mt-1 zebra-ai')}
+                                <p class="text-gray-700 ml-3">Sono **Zebra AI**, il tuo tutor! Inserisci la tua richiesta o **scatta una foto** al quaderno/libro (icona 📷) per ricevere supporto immediato.</p>
+                            </div>
+
+                            <div id="chatContainer" class="chat-wrap flex-grow mb-4">
+                                <div class="msg bot">
+                                    <div class="bubble">Ciao! Sono qui per aiutarti a studiare in modo più sereno. Cosa ti serve oggi?</div>
+                                </div>
+                            </div>
+                            <div class="inputbar flex items-end gap-2">
+                                <label for="tutorFile" class="btn btn-secondary flex items-center justify-center p-3 h-12 w-12 flex-shrink-0 cursor-pointer">
+                                    ${getIcon('camera', 'w-6 h-6')}
+                                    <input type="file" id="tutorFile" accept="image/*, .pdf, .txt" class="hidden">
+                                </label>
+                                <textarea id="tutorInput" class="input-field w-full h-12" rows="1" placeholder="Chiedi alla Zebra AI... (es. Spiegami la fotosintesi)"></textarea>
+                                <button class="btn btn-primary h-12 w-12 flex items-center justify-center flex-shrink-0" id="tutorSend" onclick="askTutor()">
+                                    ${getIcon('send', 'w-5 h-5')}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                case ROUTES.TRANSLATE:
+                    return `
+                        <div class="space-y-6">
+                            <label for="translateText" class="block text-base font-medium text-gray-700">Testo da tradurre</label>
+                            <textarea id="translateText" class="input-field w-full p-4" rows="8" placeholder="Inserisci qui il testo che vuoi tradurre e magari farti leggere..."></textarea>
+                            
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                                <label for="targetLang" class="text-base font-medium text-gray-700 flex-shrink-0">Traduci in:</label>
+                                <select id="targetLang" class="input-field p-2 bg-white flex-grow">
+                                    ${languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('')}
+                                </select>
+                                <button id="translateGo" class="btn btn-primary sm:w-auto w-full" onclick="runTranslate()">
+                                    ${getIcon('chevrons-right', 'w-5 h-5 mr-2')} Traduci
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="text-base font-medium text-gray-700">Risultato</label>
+                                    <button id="speakBtn" class="btn btn-secondary text-sm flex items-center opacity-50" onclick="speakTranslation()" disabled>
+                                        ${getIcon('volume-2', 'w-4 h-4 mr-2')} Audio Vocale
+                                    </button>
+                                </div>
+                                <pre id="translateOut" class="panel min-h-[150px]"></pre>
+                            </div>
+                        </div>
+                    `;
+
+                case ROUTES.ANALYZE:
+                    return `
+                        <div id="analyze-container" class="space-y-6">
+                            <label for="analyzeTextarea" class="block text-base font-medium text-gray-700">Incolla qui il testo da analizzare</label>
+                            <textarea id="analyzeTextarea" class="input-field w-full p-4" rows="10" placeholder="Incolla qui il testo o un paragrafo da un libro…"></textarea>
+                            
+                            <div class="flex gap-4 justify-end">
+                                <button id="conceptMapBtn" class="btn btn-secondary flex items-center" onclick="mockConceptMap()">
+                                    ${getIcon('layout', 'w-5 h-5 mr-2')} Mappa Concettuale (Mock)
+                                </button>
+                                <button id="summarizeBtn" class="btn btn-primary flex items-center" onclick="analyzeText()">
+                                    ${getIcon('file-text', 'w-5 h-5 mr-2')} Riassunto
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <label class="block text-base font-medium text-gray-700 mb-2">Risultato Analisi</label>
+                                <pre id="analyzeOut" class="panel min-h-[150px]"></pre>
+                            </div>
+                        </div>
+                    `;
+
+                default:
+                    return `<div class="p-8 text-center text-red-500">❌ Pagina non trovata.</div>`;
+            }
+        }
+
+        function renderApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                ${getHeader()}
+                <main class="container-app max-w-4xl w-full mx-auto p-4 flex-grow">
+                    ${getBodyContent()}
+                </main>
+                <footer class="bg-white p-3 text-center text-sm text-gray-500 border-t">Leggolo AI – Beta | Per lo studio accessibile (Simulazione Funzionante con Gemini)</footer>
+            `;
+            lucide.createIcons(); // Inizializza le icone Lucide
+
+            // Ri-associa eventi dopo il rendering per la chat
+            if (currentRoute === ROUTES.TUTOR) {
+                const input = document.getElementById('tutorInput');
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            askTutor();
+                        }
+                    });
+                }
+                // Placeholder per la history
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    chatHistory.forEach(msg => {
+                        addMsg(msg.role, msg.text, 'chatContainer');
+                    });
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+        }
+
+        // Avvia l'applicazione on load
+        window.onload = () => {
+            const appDiv = document.createElement('div');
+            appDiv.id = 'app';
+            appDiv.className = 'flex flex-col min-h-screen';
+            document.body.appendChild(appDiv);
+            renderApp();
+        };
+        // #endregion HTML Rendering
+    </script>
+</head>
+<body class="p-0 m-0">
+    <!-- L'app verrà renderizzata qui da JavaScript -->
+</body>
+</html>
